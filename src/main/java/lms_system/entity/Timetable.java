@@ -2,6 +2,7 @@ package lms_system.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 import java.time.LocalDateTime;
 
 @Entity
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@SQLRestriction("deleted = false")
 public class Timetable {
 
     @Id
@@ -34,4 +36,7 @@ public class Timetable {
 
     @Column(nullable = false, name = "end_time")
     private LocalDateTime endTime;
+
+    @Column(nullable = false)
+    private boolean deleted = false;
 }

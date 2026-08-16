@@ -2,6 +2,7 @@ package lms_system.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Table(name = "teachers")
@@ -10,6 +11,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@SQLRestriction("deleted = false")
 public class Teacher {
 
     @Id
@@ -21,4 +23,7 @@ public class Teacher {
 
     @Column(nullable = false, name = "last_name")
     private String lastName;
+
+    @Column(nullable = false)
+    private boolean deleted = false;
 }

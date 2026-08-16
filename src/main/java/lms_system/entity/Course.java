@@ -2,6 +2,7 @@ package lms_system.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Table(name = "courses")
@@ -10,6 +11,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@SQLRestriction("deleted = false")
 public class Course {
 
     @Id
@@ -25,4 +27,7 @@ public class Course {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "teacher_id", nullable = false)
     private Teacher teacher;
+
+    @Column(nullable = false)
+    private boolean deleted = false;
 }

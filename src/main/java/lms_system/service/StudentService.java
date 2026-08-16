@@ -1,5 +1,6 @@
 package lms_system.service;
 
+import lms_system.dto.PageResponse;
 import lms_system.dto.StudentDto;
 import lms_system.entity.Group;
 import lms_system.entity.Student;
@@ -12,7 +13,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -21,7 +21,6 @@ import java.util.Set;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class StudentService {
-
     private final StudentRepository studentRepository;
     private final GroupRepository groupRepository;
     private final StudentMapper studentMapper;
@@ -29,43 +28,33 @@ public class StudentService {
     @Transactional
     public StudentDto create(StudentDto dto) {
         Student student = studentMapper.toEntity(dto);
-
-        Set<Group> groups = fetchGroupsByIds(dto.getGroupIds());
-        student.setGroups(groups);
-
+        student.setGroups(fetchGroupsByIds(dto.getGroupIds()));
         return studentMapper.toDto(studentRepository.save(student));
     }
 
-    public Page<StudentDto> getAll(Pageable pageable) {
-        return studentRepository.findAll(pageable).map(studentMapper::toDto);
+    public PageResponse<StudentDto> getAll(Pageable pageable) {
+        Page<StudentDto> page = studentRepository.findAll(pageable).map(studentMapper::toDto);
+        return new PageResponse<>(page.getContent(), page.getNumber(), page.getTotalPages(), page.getTotalElements());
     }
 
     public StudentDto getById(Long id) {
-        Student student = studentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Студент с id " + id + " не найден"));
-        return studentMapper.toDto(student);
+        return studentMapper.toDto(studentRepository.getOrThrow(id));
     }
 
     @Transactional
     public StudentDto update(Long id, StudentDto dto) {
-        Student existing = studentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Студент с id " + id + " не найден"));
-
+        Student existing = studentRepository.getOrThrow(id);
         existing.setFirstName(dto.getFirstName());
         existing.setLastName(dto.getLastName());
-
-        Set<Group> groups = fetchGroupsByIds(dto.getGroupIds());
-        existing.setGroups(groups);
-
+        existing.setGroups(fetchGroupsByIds(dto.getGroupIds()));
         return studentMapper.toDto(studentRepository.save(existing));
     }
 
     @Transactional
     public void delete(Long id) {
-        if (!studentRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Студент с id " + id + " не найден");
-        }
-        studentRepository.deleteById(id);
+        Student student = studentRepository.getOrThrow(id);
+        student.setDeleted(true);
+        studentRepository.save(student);
     }
 
     private Set<Group> fetchGroupsByIds(Set<Long> ids) {

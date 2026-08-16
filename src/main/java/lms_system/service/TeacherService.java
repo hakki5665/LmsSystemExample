@@ -1,8 +1,8 @@
 package lms_system.service;
 
+import lms_system.dto.PageResponse;
 import lms_system.dto.TeacherDto;
 import lms_system.entity.Teacher;
-import lms_system.exception.ResourceNotFoundException;
 import lms_system.mapper.TeacherMapper;
 import lms_system.repository.TeacherRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,37 +22,30 @@ public class TeacherService {
     @Transactional
     public TeacherDto create(TeacherDto dto) {
         Teacher teacher = teacherMapper.toEntity(dto);
-        Teacher saved = teacherRepository.save(teacher);
-        return teacherMapper.toDto(saved);
+        return teacherMapper.toDto(teacherRepository.save(teacher));
     }
 
-    public Page<TeacherDto> getAll(Pageable pageable) {
-        return teacherRepository.findAll(pageable)
-                .map(teacherMapper::toDto);
+    public PageResponse<TeacherDto> getAll(Pageable pageable) {
+        Page<TeacherDto> page = teacherRepository.findAll(pageable).map(teacherMapper::toDto);
+        return new PageResponse<>(page.getContent(), page.getNumber(), page.getTotalPages(), page.getTotalElements());
     }
 
     public TeacherDto getById(Long id) {
-        Teacher teacher = teacherRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Преподаватель с id " + id + " не найден"));
-        return teacherMapper.toDto(teacher);
+        return teacherMapper.toDto(teacherRepository.getOrThrow(id));
     }
 
     @Transactional
     public TeacherDto update(Long id, TeacherDto dto) {
-        Teacher existing = teacherRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Преподаватель с id " + id + " не найден"));
-
+        Teacher existing = teacherRepository.getOrThrow(id);
         existing.setFirstName(dto.getFirstName());
         existing.setLastName(dto.getLastName());
-
         return teacherMapper.toDto(teacherRepository.save(existing));
     }
 
     @Transactional
     public void delete(Long id) {
-        if (!teacherRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Преподаватель с id " + id + " не найден");
-        }
-        teacherRepository.deleteById(id);
+        Teacher teacher = teacherRepository.getOrThrow(id);
+        teacher.setDeleted(true);
+        teacherRepository.save(teacher);
     }
 }
